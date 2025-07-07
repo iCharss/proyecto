@@ -10,8 +10,17 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@types/uuid": "^10.0.0",
     "aws-sdk": "^2.1692.0",
     "express": "^5.1.0",
-    "serverless-http": "^3.2.0"
+    "serverless-http": "^3.2.0",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "@aws-sdk/client-dynamodb": "^3.840.0",
+    "@aws-sdk/lib-dynamodb": "^3.840.0",
+    "aws-sdk-client-mock": "^4.1.0",
+    "jest": "^30.0.4",
+    "serverless-offline": "^14.4.0"
   }
 }

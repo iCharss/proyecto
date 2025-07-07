@@ -5,6 +5,7 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: laravel_db
+      MYSQL_TEST_DATABASE: laravel_testing
     ports:
       - "3306:3306"
     volumes:

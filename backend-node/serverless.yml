@@ -1,0 +1,44 @@
+service: backend-node
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: dev
+  region: us-east-1
+  environment:
+    SQS_QUEUE_URL: !Ref MySQSQueue
+
+resources:
+  Resources:
+    MySQSQueue:
+      Type: AWS::SQS::Queue
+    ProductsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ProductsTable
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+functions:
+  api:
+    handler: src/handlers/api.handler
+    events:
+      - httpApi: 
+          path: /{proxy+}
+          method: ANY
+      - httpApi: 
+          path: /
+          method: ANY
+  sqsHandler:
+    handler: src/handlers/sqsHandler.handler
+    events:
+      - sqs: 
+          arn: !GetAtt MySQSQueue.Arn
+
+plugins:
+  - serverless-offline
