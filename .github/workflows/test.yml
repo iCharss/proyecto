@@ -5,6 +5,19 @@ on: [push, pull_request]
 jobs:
   test-laravel:
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: test_db
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
     steps:
       - uses: actions/checkout@v4
       - name: Set up PHP
@@ -16,6 +29,27 @@ jobs:
         run: |
           cd backend-laravel
           composer install
+      - name: Prepare .env
+        run: |
+          cd backend-laravel
+          cp .env.example .env
+          php artisan key:generate
+          sed -i 's/DB_DATABASE=.*/DB_DATABASE=test_db/' .env
+          sed -i 's/DB_USERNAME=.*/DB_USERNAME=root/' .env
+          sed -i 's/DB_PASSWORD=.*/DB_PASSWORD=root/' .env
+          sed -i 's/DB_HOST=.*/DB_HOST=127.0.0.1/' .env
+      - name: Wait for MySQL
+        run: |
+          for i in {1..30}; do
+            if mysqladmin ping -h"127.0.0.1" --silent; then
+              break
+            fi
+            sleep 1
+          done
+      - name: Run Migrations
+        run: |
+          cd backend-laravel
+          php artisan migrate
       - name: Run PHPUnit Tests
         run: |
           cd backend-laravel

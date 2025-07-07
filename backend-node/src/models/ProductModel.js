@@ -1,12 +1,13 @@
 const { DynamoDBDocument } = require('@aws-sdk/lib-dynamodb');
 const { DynamoDB } = require('@aws-sdk/client-dynamodb');
-const { v4: uuidv4 } = require('uuid'); // ¡Importante! Añade esto
+const { v4: uuidv4 } = require('uuid');
+
 
 const dynamoDB = DynamoDBDocument.from(new DynamoDB({
   region: 'us-east-1',
 }));
 
-const TABLE_NAME = 'ProductsTable';
+const TABLE_NAME = process.env.TABLE_NAME;
 
 class ProductModel {
   async create(product) {

@@ -6,12 +6,48 @@ provider:
   stage: dev
   region: us-east-1
   environment:
-    SQS_QUEUE_URL: !Ref MySQSQueue
+    SQS_QUEUE_URL: !Ref ProductEventsQueue
+    PRODUCTS_TABLE: !Ref ProductsTable
+
+  # Permisos IAM para la Lambda
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:PutItem
+            - dynamodb:GetItem
+            - dynamodb:Scan
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource: !GetAtt ProductsTable.Arn
+        - Effect: Allow
+          Action:
+            - sqs:SendMessage
+          Resource: !GetAtt ProductEventsQueue.Arn
+
+functions:
+  api:
+    handler: src/handlers/api.handler
+    events:
+      - httpApi:
+          path: /products
+          method: post
+          cors: true
+      - httpApi:
+          path: /products/{id}
+          method: get
+          cors: true
+
+  sqsHandler:
+    handler: src/handlers/sqsHandler.handler
+    events:
+      - sqs:
+          arn: !GetAtt ProductEventsQueue.Arn
+          batchSize: 1 # Procesar mensajes uno a uno
 
 resources:
   Resources:
-    MySQSQueue:
-      Type: AWS::SQS::Queue
     ProductsTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -24,21 +60,19 @@ resources:
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
 
-functions:
-  api:
-    handler: src/handlers/api.handler
-    events:
-      - httpApi: 
-          path: /{proxy+}
-          method: ANY
-      - httpApi: 
-          path: /
-          method: ANY
-  sqsHandler:
-    handler: src/handlers/sqsHandler.handler
-    events:
-      - sqs: 
-          arn: !GetAtt MySQSQueue.Arn
+    ProductEventsQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ProductEventsQueue
+        VisibilityTimeout: 300
+
+  Outputs:
+    HttpApiUrl:
+      Description: "URL del API HTTP"
+      Value: !Sub "https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com"
+    SqsQueueUrl:
+      Description: "URL de la cola SQS"
+      Value: !Ref ProductEventsQueue
 
 plugins:
   - serverless-offline
