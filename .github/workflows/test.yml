@@ -1,0 +1,39 @@
+name: Run Tests
+
+on: [push, pull_request]
+
+jobs:
+  test-laravel:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, mysql
+      - name: Install Laravel Dependencies
+        run: |
+          cd backend-laravel
+          composer install
+      - name: Run PHPUnit Tests
+        run: |
+          cd backend-laravel
+          ./vendor/bin/phpunit
+
+  test-node:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - name: Install Node Dependencies
+        run: |
+          cd backend-node
+          npm install
+      - name: Run Jest Tests
+        run: |
+          cd backend-node
+          npx jest
